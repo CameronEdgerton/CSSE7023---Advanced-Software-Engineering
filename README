@@ -1,5 +1,7 @@
-This is the code for my second assignment, which involved building the backend of a building management system.
+This is the code for my Java assignments which involved creating a building management system.
 
-Any code that isn't marked as 'given' was written by myself. I received 43/45 for functionality.
+Assignment 1 was mostly backend. I received 45/50 for functionality.
 
-We also had to write tests for our code. I received 14/20 for my tests.
+Assignment 2 was backend and testing, as well as integrating with UI. I received 43/45 for functionality and 14/20 for tests.
+
+Any code that isn't marked as 'given' was written by myself. 
