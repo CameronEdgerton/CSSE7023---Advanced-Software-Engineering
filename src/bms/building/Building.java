@@ -6,300 +6,149 @@ import bms.exceptions.FloorTooSmallException;
 import bms.exceptions.NoFloorBelowException;
 import bms.floor.Floor;
 import bms.room.RoomType;
-import bms.util.Encodable;
 import bms.util.FireDrill;
-
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Represents a building of floors, which in turn, contain rooms.
- * <p>
- * A building needs to manage and keep track of the floors that make up the
- * building.
- * <p>
- * A building can be evacuated, which causes all rooms on all floors within
- * the building to be evacuated.
- * @ass1
+ * A class representing a building of floors, which in turn, contain rooms.
  */
-public class Building implements FireDrill, Encodable {
+public class Building implements FireDrill {
 
-    /**
-     * The name of the building.
-     */
+    // The name of the building
     private String name;
+    // The list of floors in the building
+    private List<Floor> floorList = new ArrayList<>();
 
     /**
-     * List of floors tracked by the building.
-     */
-    private List<Floor> floors;
-
-    /**
-     * Creates a new empty building with no rooms.
+     * Constructs a building
      *
-     * @param name name of this building, eg. "General Purpose South"
-     * @ass1
+     * @param name the name of the building
      */
     public Building(String name) {
         this.name = name;
-        this.floors = new ArrayList<>();
     }
 
     /**
-     * Returns the name of the building.
-     *
-     * @return name of this building
-     * @ass1
+     * @return the name of the building
      */
     public String getName() {
         return name;
     }
 
     /**
-     * Returns a new list containing all the floors in this building.
-     * <p>
-     * Adding or removing floors from this list should not affect the
-     * building's internal list of floors.
-     *
-     * @return new list containing all floors in the building
-     * @ass1
+     * @return the list of floors in the building
      */
     public List<Floor> getFloors() {
-        return new ArrayList<>(this.floors);
+        return new ArrayList<Floor>(floorList);
     }
 
     /**
      * Searches for the floor with the specified floor number.
-     * <p>
-     * Returns the corresponding Floor object, or null if the floor was not
-     * found.
-     *
      * @param floorNumber floor number of floor to search for
      * @return floor with the given number if found; null if not found
-     * @ass1
      */
     public Floor getFloorByNumber(int floorNumber) {
-        for (Floor floor : this.floors) {
+        Floor result = null;
+
+        for (Floor floor : getFloors()) {
+            //Check if there is a floor with the same number
             if (floor.getFloorNumber() == floorNumber) {
-                return floor;
+                result = floor;
+                break;
+            } else {
+                result = null;
             }
         }
-        return null;
+        return result;
     }
 
     /**
      * Adds a floor to the building.
-     * <p>
-     * If the given arguments are invalid, the floor already exists,
-     * there is no floor below, or the floor below does not have enough area
-     * to support this floor, an exception should be thrown and no action
-     * should be taken.
      *
      * @param newFloor object representing the new floor
-     * @throws IllegalArgumentException if floor number is &lt;= 0,
-     * width &lt; Floor.getMinWidth(), or length &lt; Floor.getMinLength()
-     * @throws DuplicateFloorException if a floor at this level already exists
-     * in the building
-     * @throws NoFloorBelowException if this is at level 2 or above and there
-     * is no floor below to support this new floor
-     * @throws FloorTooSmallException if this is at level 2 or above and
-     * the floor below is not big enough to support this new floor
-     *
-     * @ass1
+     * @throws IllegalArgumentException if the floor number is below 1, or
+     *                                  the width / length are less than the
+     *                                  minimum width / length
+     * @throws DuplicateFloorException if a floor with the same number
+     *                                 already exists
+     * @throws NoFloorBelowException  if this is at level 2 or above and
+     *                                there is no floor below to support this
+     *                                new floor
+     * @throws FloorTooSmallException if this is at level 2 or above and the
+     *                                floor below is not big enough to
+     *                                support this new floor
      */
-    public void addFloor(Floor newFloor) throws
-            IllegalArgumentException, DuplicateFloorException,
-            NoFloorBelowException, FloorTooSmallException {
-
-        int newFloorNumber = newFloor.getFloorNumber();
-        if (newFloorNumber < 1) {
-            throw new IllegalArgumentException(
-                    "Floor number must be 1 or higher.");
-        } else if (newFloor.getWidth() < Floor.getMinWidth())  {
-            throw new IllegalArgumentException(
-                    "Width cannot be less than " + Floor.getMinWidth());
-        } else if (newFloor.getLength() < Floor.getMinLength()) {
-            throw new IllegalArgumentException(
-                    "Length cannot be less than " + Floor.getMinLength());
-        }
-        if (this.getFloorByNumber(newFloorNumber) != null) {
-            throw new DuplicateFloorException(
-                    "This floor level already exists in the building.");
-        }
-
-        Floor floorBelow = this.getFloorByNumber(newFloorNumber - 1);
-        if (newFloorNumber >= 2 && floorBelow == null) {
-            throw new NoFloorBelowException("There is no floor below to "
-                    + "support this new floor.");
-        }
-        if (newFloorNumber >= 2 && (newFloor.getWidth() > floorBelow.getWidth()
-                || newFloor.getLength() > floorBelow.getLength())) {
-            throw new FloorTooSmallException("The floor below does not "
-                    + "have enough area to support this floor. ");
-        }
-
-        // No problems, so add floor to the list of floors
-        floors.add(newFloor);
-    }
-
-    /**
-     * Renovate the given floor by changing the width and length.
-     *
-     * @param floorNumber the floor which is to be renovated
-     * @param newWidth the new width dimension for the floor
-     * @param newLength the new length dimension for the floor
-     * @throws IllegalArgumentException if the given floor does not exist
-     *                                  (i.e. getFloorByNumber() is null), or
-     *                                  if newWidth < Floor.getMinWidth(), or
-     *                                  newLength < Floor.getMinLength()
-     * @throws FloorTooSmallException  if the floor below is too small to
-     *                                 support increased dimensions, if the
-     *                                 floor above is too large to be
-     *                                 supported by decreased dimensions, or
-     *                                 if the total size of the current rooms
-     *                                 could not be supported by decreased
-     *                                 dimensions
-     */
-    public void renovateFloor(int floorNumber, double newWidth,
-                              double newLength) throws IllegalArgumentException,
+    public void addFloor(Floor newFloor) throws IllegalArgumentException,
+            DuplicateFloorException, NoFloorBelowException,
             FloorTooSmallException {
-        if (!getFloors().contains(getFloorByNumber(floorNumber))) {
-            throw new IllegalArgumentException();
-        }
-        Floor floor = getFloorByNumber(floorNumber);
-        Floor floorBelow = getFloorByNumber(floorNumber - 1);
-        Floor floorAbove = getFloorByNumber(floorNumber + 1);
+        Floor floorBelow = getFloorByNumber(newFloor.getFloorNumber()
+                - 1);
 
-        if (newWidth < floor.getMinWidth() || newLength <
-                floor.getMinLength()) {
+        if (newFloor.getFloorNumber() <= 0 |
+                newFloor.getWidth() < Floor.getMinWidth() |
+                newFloor.getLength() < Floor.getMinLength()) {
             throw new IllegalArgumentException();
-        } else if (getFloors().contains(floorBelow) &&
-                floorBelow.calculateArea() < (newWidth * newLength)) {
+        } else if (getFloorByNumber(newFloor.getFloorNumber()) != null) {
+            throw new DuplicateFloorException();
+        } else if (newFloor.getFloorNumber() >= 2 && floorBelow == null) {
+            throw new NoFloorBelowException();
+        } else if (newFloor.getFloorNumber() >= 2 && floorBelow.calculateArea()
+                < newFloor.calculateArea()) {
             throw new FloorTooSmallException();
-        } else if (getFloors().contains(floorAbove) &&
-                floorAbove.calculateArea() > (newWidth * newLength)) {
-            throw new FloorTooSmallException();
-        } else if (floor.occupiedArea() > (newWidth * newLength)) {
-            throw new FloorTooSmallException();
-        } else {
-            floor.changeDimensions(newWidth, newLength);
         }
+        floorList.add(newFloor);
     }
 
     /**
      * Start a fire drill in all rooms of the given type in the building.
-     * Only rooms of the given type must start a fire alarm.
-     * Rooms other than the given type must not start a fire alarm.
-     * * <p>
-     * If the room type given is null, then <b>all</b> rooms in the building
-     * must start a fire drill.
-     * <p>
-     * If there are no rooms (of any type) in the building, a
-     * FireDrillException must be thrown. Note that floors may be in the
-     * building, but the floors may not contain rooms yet.
      *
-     * @param roomType the type of room to carry out fire drills on; null if
-     *                 fire drills are to be carried out in all rooms
-     * @throws FireDrillException if there are no floors in the building, or
-     * there are floors but no rooms in the building
-     * @ass1
+     * If the room type given is null, then all rooms in the building will
+     * start a fire drill.
+     *
+     * @param roomType type of room to call a fire drill on
+     * @throws FireDrillException if there are no rooms of any type in the
+     *                            building
      */
     public void fireDrill(RoomType roomType) throws FireDrillException {
-        if (this.floors.size() < 1) {
-            throw new FireDrillException("Cannot conduct fire drill because "
-                    + "there are no floors in the building yet!");
+        int count = 0;
+        // Throw exception if there are no floors and therefore no rooms
+        if (getFloors().isEmpty()) {
+            throw new FireDrillException();
         }
-        boolean hasRooms = false;
-        for (Floor floor : this.floors) {
+
+        for (Floor floor : getFloors()) {
+            // Set a fire drill in rooms of the given roomType if the floor has
+            // rooms
             if (!floor.getRooms().isEmpty()) {
-                hasRooms = true;
-            }
-        }
-        if (!hasRooms) {
-            throw new FireDrillException("Cannot conduct fire drill because "
-                    + "there are no rooms in the building yet!");
-        } else {
-            for (Floor floor : this.floors) {
                 floor.fireDrill(roomType);
+            // If no rooms are found on the floor, add to the count
+            } else {
+                count += 1;
+            }
+            // Throws exception if every floor has no rooms.
+            if (count == getFloors().size()) {
+                throw new FireDrillException();
             }
         }
     }
 
     /**
      * Cancels any ongoing fire drill in the building.
-     * <p>
-     * All rooms must have their fire alarm cancelled regardless of room type.
-     *
-     * @ass1
      */
     public void cancelFireDrill() {
-        for (Floor floor : this.floors) {
+        for (Floor floor : getFloors()) {
             floor.cancelFireDrill();
         }
     }
 
     /**
-     * Returns true if and only if this building is equal to the other given
-     * building.
-     *
-     * @param obj other object to compare equality
-     * @return true if equal, false otherwise
-     */
-    @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof Building)) {
-            return false;
-        }
-        Building otherBuilding = (Building) obj;
-        if (otherBuilding.getFloors().size() != this.getFloors().size()) {
-            return false;
-        }
-        for (Floor floor : this.getFloors()) {
-            int index = this.getFloors().indexOf(floor);
-            if (!floor.equals(otherBuilding.getFloors().get(index))) {
-                return false;
-            }
-        }
-        return this.name.equals(otherBuilding.name);
-    }
-
-    /**
-     * @return hash code of this building
-     */
-    @Override
-    public int hashCode() {
-        return name.hashCode() + getFloors().size() + getFloors().hashCode();
-    }
-
-    /**
-     * Returns the human-readable string representation of this building.
-     * <p>
-     * The format of the string to return is
-     * "Building: name="'buildingName'", floors='numFloors'"
-     * without the single quotes, where 'buildingName' is the building's name,
-     * and 'numFloors' is the number of floors in the building.
-     * <p>
-     * For example:
-     * "Building: name="GP South", floors=7"
-     *
-     * @return string representation of this building
-     * @ass1
+     * @return The string representation of the building and its associated
+     *         details.
      */
     @Override
     public String toString() {
-        return String.format("Building: name=\"%s\", floors=%d",
-                this.name, this.floors.size());
-    }
-
-    /**
-     * @return encoded string representation of this building
-     */
-    public String encode() {
-        String output = name + System.lineSeparator() + getFloors().size() +
-                        System.lineSeparator();
-        for (Floor floor : getFloors()) {
-            output += floor.encode() + System.lineSeparator();
-        }
-        return output.stripTrailing();
+        return "Building: name=\"" + getName() + "\", floors=" +
+                getFloors().size();
     }
 }

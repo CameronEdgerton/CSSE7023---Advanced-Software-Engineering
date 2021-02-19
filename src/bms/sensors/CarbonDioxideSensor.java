@@ -1,202 +1,87 @@
 package bms.sensors;
 
 /**
- * A sensor that measures levels of carbon dioxide (CO2) in the air, in parts
- * per million (ppm).
- * @ass1
+ * A class representing a carbon dioxide sensor.
  */
-public class CarbonDioxideSensor extends TimedSensor implements HazardSensor,
-        ComfortSensor {
+public class CarbonDioxideSensor extends TimedSensor implements HazardSensor {
 
-    /**
-     * The ideal value for this sensor, where the comfort level is highest.
-     */
+    // The ideal CO2 value in ppm
     private int idealValue;
-
-    /**
-     * The maximum variation that is allowed from the ideal value. The comfort
-     * level will be 0 when the value is this far (or further) away from the
-     * ideal value.
-     */
+    // The acceptable range above and below ideal value in ppm
     private int variationLimit;
 
     /**
-     * Creates a new carbon dioxide sensor with the given sensor readings,
-     * update frequency, ideal CO2 value and acceptable variation limit.
-     * <p>
-     * Different rooms and environments may naturally have different "normal"
-     * CO2 concentrations, for example, a large room with many windows may
-     * have lower typical CO2 concentrations than a small room with poor
-     * airflow.
-     * <p>
-     * To allow for these discrepancies, each CO2 sensor has an "ideal" CO2
-     * concentration and a maximum acceptable variation from this value.
-     * Both the ideal value and variation limit must be greater than zero.
-     * These two values must be such that (idealValue - variationLimit) &gt;= 0.
+     * Constructs a carbon dioxide sensor.
      *
-     * @param sensorReadings array of CO2 sensor readings <b>in ppm</b>
-     * @param updateFrequency indicates how often the sensor readings update,
-     *                        in minutes
+     * @param sensorReadings array of CO2 sensor readings in ppm
+     * @param updateFrequency how often the sensor readings update, in minutes
      * @param idealValue ideal CO2 value in ppm
-     * @param variationLimit acceptable range above and below ideal value in ppm
-     * @throws IllegalArgumentException if idealValue &lt;= 0;
-     * or if variationLimit &lt;= 0; or if (idealValue - variationLimit) &lt; 0
-     * @ass1
+     * @param variationLimit acceptable range above and below ideal value in
+     *                       ppm
+     * @throws IllegalArgumentException if the ideal value or variation limit
+     *                                  are less than or equal to 0, or if the
+     *                                  ideal value less the variation
+     *                                  limit is less than 0.
      */
     public CarbonDioxideSensor(int[] sensorReadings, int updateFrequency,
-                               int idealValue, int variationLimit)
-            throws IllegalArgumentException {
+            int idealValue, int variationLimit) throws
+            IllegalArgumentException {
         super(sensorReadings, updateFrequency);
-
-        if (idealValue <= 0) {
-            throw new IllegalArgumentException("Ideal CO2 value must be > 0");
-        }
-        if (variationLimit <= 0) {
-            throw new IllegalArgumentException(
-                    "CO2 variation limit must be > 0");
-        }
-
-        if (idealValue - variationLimit < 0) {
-            throw new IllegalArgumentException("Ideal CO2 value - variation "
-                    + "limit must be >= 0");
-        }
-
         this.idealValue = idealValue;
         this.variationLimit = variationLimit;
+
+        if (idealValue <= 0 | variationLimit <= 0 | (idealValue -
+                variationLimit) < 0) {
+            throw new IllegalArgumentException();
+        }
     }
 
     /**
-     * Returns the sensor's CO2 variation limit.
-     *
-     * @return variation limit in ppm
-     * @ass1
+     * @return the variation limit
      */
     public int getVariationLimit() {
         return variationLimit;
     }
 
     /**
-     * Returns the sensor's ideal CO2 value.
-     *
-     * @return ideal value in ppm
-     * @ass1
+     * @return the ideal value
      */
     public int getIdealValue() {
         return idealValue;
     }
 
     /**
-     * Returns the hazard level as detected by this sensor.
-     * <p>
-     * The returned hazard level is determined by the following table, and is
-     * based on the current sensor reading.
-     * <table border="1">
-     * <caption>CO2 hazard level table</caption>
-     * <tr>
-     * <th>Current sensor reading</th>
-     * <th>Hazard level</th>
-     * <th>Associated effect</th>
-     * </tr>
-     * <tr><td>0-999</td><td>0</td><td>No effects</td></tr>
-     * <tr><td>1000-1999</td><td>25</td><td>Drowsiness</td></tr>
-     * <tr><td>2000-4999</td><td>50</td>
-     * <td>Headaches, sleepiness, loss of concentration</td></tr>
-     * <tr><td>5000+</td><td>100</td><td>Oxygen deprivation</td></tr>
-     * </table>
+     * Returns the hazard level as detected by the sensor, based on the
+     * current reading.
      *
-     * @return the current hazard level as an integer between 0 and 100
-     * @ass1
+     * @return the hazard level as an integer between 0 and 100.
      */
     @Override
     public int getHazardLevel() {
-        final int currentReading = this.getCurrentReading();
-        if (currentReading < 1000) {
-            return 0;
-        }
-        if (currentReading < 2000) {
-            return 25;
-        }
-        if (currentReading < 5000) {
-            return 50;
-        }
-        return 100;
-    }
+        int sensorReading = getCurrentReading();
+        int result;
 
-    /**
-     * Returns the comfort level as detected by this sensor.
-     *
-     * @return comfort level as an integer between 0 and 100
-     */
-    public int getComfortLevel() {
-        int absDif = Math.abs(getIdealValue() - this.getCurrentReading());
-        float ratio = (float) absDif / getVariationLimit();
-        if (absDif >= getVariationLimit()) {
-            return 0;
+        if (sensorReading >= 0 && sensorReading <= 999) {
+            result = 0;
+        } else if (sensorReading >= 1000 && sensorReading <= 1999) {
+            result = 25;
+        } else if (sensorReading >= 2000 && sensorReading <= 4999) {
+            result = 50;
         } else {
-            return Math.round(100 - (ratio * 100));
+            result = 100;
         }
+        return result;
     }
 
     /**
-     * Returns true if and only if this CO2 sensor is equal to the other
-     * given sensor.
-     *
-     * @param obj the object to compare equality
-     * @return true if equal, false otherwise
+     * @return The string representation of the sensor and its associated
+     *         details.
      */
     @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof CarbonDioxideSensor)) {
-            return false;
-        }
-        CarbonDioxideSensor otherSensor = (CarbonDioxideSensor) obj;
-        return super.equals(otherSensor) && this.getIdealValue() ==
-                otherSensor.getIdealValue() && this.getVariationLimit() ==
-                otherSensor.getVariationLimit();
-    }
-
-    /**
-     * @return hash code of this sensor
-     */
-    @Override
-    public int hashCode() {
-        return super.hashCode() + idealValue + variationLimit;
-    }
-
-    /**
-     * Returns the human-readable string representation of this CO2 sensor.
-     * <p>
-     * The format of the string to return is
-     * "TimedSensor: freq='updateFrequency', readings='sensorReadings',
-     * type=CarbonDioxideSensor, idealPPM='idealValue',
-     * varLimit='variationLimit'"
-     * without the single quotes, where 'updateFrequency' is this sensor's
-     * update frequency (in minutes), 'sensorReadings' is a comma-separated
-     * list of this sensor's readings, 'idealValue' is this sensor's ideal CO2
-     * concentration, and 'variationLimit' is this sensor's variation limit.
-     * <p>
-     * For example: "TimedSensor: freq=5, readings=702,694,655,680,711,
-     * type=CarbonDioxideSensor, idealPPM=600, varLimit=250"
-     *
-     * @return string representation of this sensor
-     * @ass1
-     */
-    @Override
-    public String toString() {
-        return String.format(
-                "%s, type=CarbonDioxideSensor, idealPPM=%d, varLimit=%d",
-                super.toString(),
-                this.idealValue,
-                this.variationLimit);
-    }
-
-    /**
-     * @return encoded string representation of this carbon dioxide sensor
-     */
-    @Override
-    public String encode() {
-        return String.format("CarbonDioxideSensor:%s:%d:%d:%d",
-                super.encode(), getUpdateFrequency(), getIdealValue(),
-                getVariationLimit()).stripTrailing();
+    public String toString(){
+        String sensorDetails = super.toString();
+        sensorDetails += " type=CarbonDioxideSensor, idealPPM=" +
+                getIdealValue() + ", varLimit=" + getVariationLimit();
+        return sensorDetails;
     }
 }

@@ -1,153 +1,67 @@
 package bms.sensors;
 
 /**
- * A sensor that measures the number of people in a room.
- * @ass1
+ * A class representing an occupancy sensor
  */
-public class OccupancySensor extends TimedSensor implements HazardSensor,
-        ComfortSensor {
-    /**
-     * Maximum capacity of the space the sensor is monitoring.
-     */
+public class OccupancySensor extends TimedSensor implements HazardSensor {
+
+    // The maximum allowable number of people in the room
     private int capacity;
 
     /**
-     * Creates a new occupancy sensor with the given sensor readings, update
-     * frequency and capacity.
-     * <p>
-     * The given capacity must be greater than or equal to zero.
+     * Constructs an occupancy sensor.
      *
      * @param sensorReadings a non-empty array of sensor readings
-     * @param updateFrequency indicates how often the sensor readings update,
-     *                        in minutes
-     * @param capacity maximum allowable number of people in the room
-     * @throws IllegalArgumentException if capacity is less than zero
-     * @ass1
+     * @param updateFrequency how often the sensor readings update, in minutes
+     * @param capacity the maximum allowable number of people in the room
      */
     public OccupancySensor(int[] sensorReadings, int updateFrequency,
-                           int capacity) {
+            int capacity) {
         super(sensorReadings, updateFrequency);
-
-        if (capacity < 0) {
-            throw new IllegalArgumentException("Capacity must be >= 0");
-        }
-
         this.capacity = capacity;
+
+        // Throws an exception disallowing the room capacity from being below 0.
+        if (capacity < 0) {
+            throw new IllegalArgumentException();
+        }
     }
 
     /**
-     * Returns the capacity of this occupancy sensor.
-     *
-     * @return capacity
-     * @ass1
+     * @return the capacity of the room.
      */
     public int getCapacity() {
         return capacity;
     }
 
     /**
-     * Returns the hazard level based on the ratio of the current sensor reading
-     * to the maximum capacity.
-     * <p>
-     * When the current reading is equal to or more than the capacity, the
-     * hazard level is equal to 100 percent.
-     * <p>
-     * For example, a room with a maximum capacity of 21 people and current
-     * occupancy of 8 people would have a hazard level of 38.
-     * A room with a maximum capacity of 30 people and a current occupancy of
-     * 34 people would have a hazard level of 100.
-     * <p>
-     * Floating point division should be used when performing the calculation,
-     * however the resulting floating point number should be <i>rounded to the
-     * nearest integer</i> before being returned.
+     * Returns the hazard level based on the ratio of the current reading to
+     * the capacity of the room.
      *
      * @return the current hazard level as an integer between 0 and 100
-     * @ass1
      */
     @Override
     public int getHazardLevel() {
-        final int currentReading = this.getCurrentReading();
+        int result;
+        // Calculate the ratio and round it to the nearest integer
+        float ratio = (float) getCurrentReading()/getCapacity() * 100;
+        int hazardLevel = Math.round(ratio);
 
-        if (currentReading >= this.capacity) {
-            return 100;
-        }
-        double occupancyRatio = ((double) currentReading) / this.capacity;
-        double occupancyPct = 100 * occupancyRatio;
-        return (int) Math.round(occupancyPct);
-    }
-
-    /**
-     * Returns the current comfort level as observed by the sensor.
-     *
-     * @return the current comfort level as an integer between 0 and 100
-     */
-    public int getComfortLevel() {
-        float complement =
-                100 - (((float) getCurrentReading() / getCapacity()) * 100);
-        int comfortLevel = Math.round(complement);
-        if (getCurrentReading() > getCapacity()) {
-            return 0;
+        if (hazardLevel >= 100) {
+            result = 100;
         } else {
-            return comfortLevel;
+            result = hazardLevel;
         }
+        return result;
     }
 
     /**
-     * Returns true if and only if this occupancy sensor is equal to the other
-     * given sensor.
-     *
-     * @param obj the object to compare equality
-     * @return true if equal, false otherwise
+     * @return The string representation of the sensor and its associated
+     *         details.
      */
     @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof OccupancySensor)) {
-            return false;
-        }
-        OccupancySensor otherSensor = (OccupancySensor) obj;
-        return super.equals(otherSensor) && this.getCapacity() ==
-                otherSensor.getCapacity();
-    }
-
-    /**
-     * @return hash code of this sensor
-     */
-    @Override
-    public int hashCode() {
-        return super.hashCode() + getCapacity();
-    }
-
-    /**
-     * Returns the human-readable string representation of this occupancy
-     * sensor.
-     * <p>
-     * The format of the string to return is
-     * "TimedSensor: freq='updateFrequency', readings='sensorReadings',
-     * type=OccupancySensor, capacity='sensorCapacity'"
-     * without the single quotes, where 'updateFrequency' is this sensor's
-     * update frequency (in minutes), 'sensorReadings' is a comma-separated
-     * list of this sensor's readings, and 'sensorCapacity' is this sensor's
-     * maximum capacity.
-     * <p>
-     * For example: "TimedSensor: freq=5, readings=27,28,28,25,3,1,
-     * type=OccupancySensor, capacity=30"
-     *
-     * @return string representation of this sensor
-     * @ass1
-     */
-    @Override
-    public String toString() {
-        return String.format("%s, type=OccupancySensor, capacity=%d",
-                super.toString(),
-                this.capacity);
-    }
-
-    /**
-     * @return encoded string representation of this occupancy sensor
-     */
-    @Override
-    public String encode() {
-        return String.format("OccupancySensor:%s:%d:%d", super.encode(),
-                getUpdateFrequency(), capacity).stripTrailing();
+    public String toString(){
+        String sensorDetails = super.toString();
+        sensorDetails += " type=OccupancySensor, capacity=" + getCapacity();
+        return sensorDetails;
     }
 }

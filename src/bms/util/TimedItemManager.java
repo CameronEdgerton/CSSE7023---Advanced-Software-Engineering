@@ -4,67 +4,45 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Singleton class which manages all the timed items.
- * <p>
- * All classes that implement TimedItem must be registered with this manager,
- * which will allow their {@link TimedItemManager#elapseOneMinute()} method to
- * be called at regular time intervals.
- * <p>
- * Once a class is registered with the timed item manager by calling
- * {@link TimedItemManager#registerTimedItem(TimedItem)} ()} and passing itself,
- * the manager will ensure that its {@code elapseOneMinute()} method is called
- * at regular intervals.
- * @ass1
+ * A Singleton class which manages all the timed items.
  */
 public class TimedItemManager implements TimedItem {
-    /**
-     * Singleton instance.
-     */
-    private static TimedItemManager instance = new TimedItemManager();
 
-    /**
-     * List of timed items currently registered with the manager.
-     */
-    private List<TimedItem> timedItems;
+    // The instance of the TimedItemManager
+    private static TimedItemManager INSTANCE;
+    // The list holding all timed item registrations
+    private List<TimedItem> timedItemList = new ArrayList<>();
 
-    /**
-     * Creates a new timed item manager with an empty list of registered items.
-     * @ass1
+    /*
+    * Private empty constructor which is limited to the class itself.
      */
     private TimedItemManager() {
-        this.timedItems = new ArrayList<>();
     }
 
     /**
-     * Returns the singleton instance of the timed item manager.
-     *
-     * @return singleton instance
-     * @ass1
+     * @return the current instance of the TimedItemManager class
      */
     public static TimedItemManager getInstance() {
-        return instance;
+        if (INSTANCE == null) {
+            INSTANCE = new TimedItemManager();
+        }
+        return INSTANCE;
     }
 
     /**
-     * Registers a timed item with the manager.
-     * <p>
-     * After calling this method, the manager will call the given timed item's
-     * {@code elapseOneMinute()} method at regular intervals.
-     *
-     * @param timedItem a timed item to register with the manager
-     * @ass1
+     * Registers a timed item to the list of timed items.
+     * @param timedItem The item to register.
      */
     public void registerTimedItem(TimedItem timedItem) {
-        this.timedItems.add(timedItem);
+        this.timedItemList.add(timedItem);
     }
 
     /**
-     * Calls {@code elapseOneMinute()} on each registered timed item.
-     * @ass1
+     * Elapses one minute for all timed items that have been registered.
      */
     @Override
     public void elapseOneMinute() {
-        for (TimedItem timedItem : this.timedItems) {
+        for (TimedItem timedItem : timedItemList) {
             timedItem.elapseOneMinute();
         }
     }

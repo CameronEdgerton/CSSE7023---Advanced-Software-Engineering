@@ -1,20 +1,17 @@
 package bms.sensors;
 
 /**
- * Represents a sensor that can be used to evaluate the level of hazard present
- * in a location monitored by the sensor.
- * @ass1
+ * Interface representing a hazard sensor
  */
 public interface HazardSensor extends Sensor {
+
     /**
-     * Returns the level of hazard in a location as detected by this sensor
-     * (as a percentage).
-     * <p>
-     * A value of 0 indicates demonstrates very low hazard, and a value of
-     * 100 indicates very high hazard.
+     * Returns the hazard level detected by the sensor.
      *
-     * @return level of hazard at sensor location, 0 to 100
-     * @ass1
+     * A value of 0 represents a very low hazard, and a value of 100 indicates
+     * very high hazard.
+     *
+     * @return hazard level as an integer between 0 and 100
      */
     int getHazardLevel();
 }
